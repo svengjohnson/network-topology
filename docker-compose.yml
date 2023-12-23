@@ -8,5 +8,3 @@ services:
       MYSQL_ROOT_PASSWORD: 'ubnt'
     ports:
       - 3306:3306
-    volumes:
-      - ./initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
