@@ -1,6 +1,6 @@
 package io.sjohnson.ubnttask.constructs;
 
-public enum NetworkDeviceTypeEnum {
+public enum NetworkDeviceType {
     GATEWAY,
     SWITCH,
     ACCESS_POINT,

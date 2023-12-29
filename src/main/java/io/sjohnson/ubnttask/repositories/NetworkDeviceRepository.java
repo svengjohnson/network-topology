@@ -1,12 +1,14 @@
 package io.sjohnson.ubnttask.repositories;
 
 import io.sjohnson.ubnttask.entities.NetworkDevice;
+import jakarta.validation.Valid;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.NonNullApi;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface NetworkDeviceRepository extends CrudRepository<NetworkDevice, Integer> {
+public interface NetworkDeviceRepository extends CrudRepository<NetworkDevice, String> {
     NetworkDevice findByMacAddress(String macAddress);
 
     // TODO: sort during runtime. While it would be cool to offload it to the database, this is mySQL-specific and a hack and code duplication
