@@ -1,34 +1,41 @@
 package io.sjohnson.ubnttask.entities;
 
 import io.sjohnson.ubnttask.constructs.NetworkDeviceType;
-import io.sjohnson.ubnttask.constructs.ValueOfEnum;
+import io.sjohnson.ubnttask.validators.ValueOfEnum;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 @Entity
-public class NetworkDevice {
+public class NetworkDevice implements Serializable {
+    public static final String MAC_ADDRESS_REGEXP = "(?:[0-9a-f]{2}(?=([:]))(?:\\1[0-9a-f]{2}){5})";
+    public static final String MAC_INVALID_MESSAGE = "MAC address must be formatted as 12:34:56:78:90:ab";
+    public static final String MAC_NOT_PROVIDED_MESSAGE = "MAC address must be provided and formatted as 12:34:56:78:90:ab";
+
     @Id
-    @Pattern(regexp = "(?:[0-9a-f]{2}(?=([:]))(?:\\1[0-9a-f]{2}){5})", message = "must be formatted as 12:34:56:78:90:ab")
-    @NotNull(message = "MAC address must provided")
+    @Pattern(regexp = MAC_ADDRESS_REGEXP, message = MAC_INVALID_MESSAGE)
+    @NotNull(message = MAC_NOT_PROVIDED_MESSAGE)
     @Column(length = 17)
     private String macAddress;
 
     @Nullable
-    @Pattern(regexp = "(?:[0-9a-f]{2}(?=([:]))(?:\\1[0-9a-f]{2}){5})", message = "must be formatted as 12:34:56:78:90:ab")
-    @Column(length = 17)
-    private String uplinkMacAddress;
+    @ManyToOne(fetch = FetchType.EAGER)
+    private NetworkDevice uplink;
 
-    @ValueOfEnum(enumClass = NetworkDeviceType.class, message = "must be GATEWAY|SWITCH|ACCESS_POINT")
+    @ValueOfEnum(enumClass = NetworkDeviceType.class, message = NetworkDeviceType.NOT_IN_ENUM_ERROR)
     private String type;
 
     @Nullable
-    @Size(min = 0, max = 60)
+    @Size(max = 60)
     private String friendlyName;
+
+    @OneToMany(mappedBy = "uplink", fetch = FetchType.LAZY)
+    private Collection<NetworkDevice> downlinks;
 
     public String getMacAddress() {
         return macAddress;
@@ -39,12 +46,12 @@ public class NetworkDevice {
     }
 
     @Nullable
-    public String getUplinkMacAddress() {
-        return uplinkMacAddress;
+    public String getUplink() {
+        return uplink != null ? uplink.macAddress : null;
     }
 
-    public void setUplinkMacAddress(@Nullable String uplinkMacAddress) {
-        this.uplinkMacAddress = uplinkMacAddress;
+    public void setUplink(@Nullable NetworkDevice uplinkMacAddress) {
+        this.uplink = uplinkMacAddress;
     }
 
     public String getType() {
@@ -62,5 +69,9 @@ public class NetworkDevice {
 
     public void setFriendlyName(@Nullable String friendlyName) {
         this.friendlyName = friendlyName;
+    }
+
+    public Collection<NetworkDevice> getDownlinks() {
+        return this.downlinks;
     }
 }

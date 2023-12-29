@@ -1,4 +1,4 @@
-package io.sjohnson.ubnttask.constructs;
+package io.sjohnson.ubnttask.validators;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
