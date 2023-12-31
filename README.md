@@ -1,15 +1,18 @@
 ### Project stack
 
+- Java 17
 - Spring Boot 3.2.1, with Web and JPA
 - H2 as database
 - REST API, exposed on port 8080
 
-### Building the project
+### Building / running the project
 
+#### Java 17 JDK is required to build/run the project
+
+To build:
 `./gradlew build`
 
-### Running the project
-
+To run:
 `./gradlew run`
 
 Or after building `java -jar build/libs/ubnt-task-1.0.jar`
