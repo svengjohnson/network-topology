@@ -99,10 +99,10 @@ public class NetworkDeviceService {
      *
      * @param newDeviceDto Network Device DTO
      * @return Network Device entity proper
-     * @throws InvalidNetworkDeviceException uplink provided doesn't exist
+     * @throws InvalidNetworkDeviceException    uplink provided doesn't exist
      * @throws DeviceCausesNetworkLoopException registering the device would result in a network loop
      */
-    public NetworkDevice save(NetworkDeviceDTO newDeviceDto) throws InvalidNetworkDeviceException, DeviceCausesNetworkLoopException {
+    public NetworkDeviceDTO save(NetworkDeviceDTO newDeviceDto) throws InvalidNetworkDeviceException, DeviceCausesNetworkLoopException {
         NetworkDevice networkDevice = mapper.toNetworkDevice(newDeviceDto);
 
         String uplinkMacAddress = networkDevice.getUplink();
@@ -120,7 +120,9 @@ public class NetworkDeviceService {
             networkDevice.setUplink(null);
         }
 
-        return repository.save(networkDevice);
+        repository.save(networkDevice);
+
+        return mapper.toDto(networkDevice);
     }
 
     /**

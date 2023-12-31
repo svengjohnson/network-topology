@@ -38,7 +38,7 @@ public class NetworkDeviceController {
     }
 
     @PutMapping("")
-    public NetworkDevice createOrUpdateDevice(@Valid @RequestBody NetworkDeviceDTO newDeviceDto) throws InvalidNetworkDeviceException, DeviceCausesNetworkLoopException {
+    public NetworkDeviceDTO createOrUpdateDevice(@Valid @RequestBody NetworkDeviceDTO newDeviceDto) throws InvalidNetworkDeviceException, DeviceCausesNetworkLoopException {
         return service.save(newDeviceDto);
     }
 
