@@ -1,6 +1,7 @@
 package io.sjohnson.ubnttask.services;
 
 import io.sjohnson.ubnttask.constructs.NetworkDeviceDTO;
+import io.sjohnson.ubnttask.constructs.NetworkDeviceType;
 import io.sjohnson.ubnttask.entities.NetworkDevice;
 import io.sjohnson.ubnttask.exceptions.InvalidNetworkDeviceException;
 import io.sjohnson.ubnttask.repositories.NetworkDeviceRepository;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+import static io.sjohnson.ubnttask.constructs.NetworkDeviceType.*;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -28,7 +30,12 @@ public class NetworkDeviceService {
      * @return returns a flat, ordered list of all registered network devices
      */
     public List<NetworkDeviceDTO> getAll() {
-        return repository.findAllByOrderByType().stream().map(mapper::toDto).collect(toList());
+        List<NetworkDeviceDTO> list = repository.findAll().stream().map(mapper::toDto).collect(toList());
+
+        List<String> definedOrder = Arrays.asList(GATEWAY.toString(), SWITCH.toString(), ACCESS_POINT.toString());
+        list.sort(Comparator.comparingInt(d -> definedOrder.indexOf(d.getType())));
+
+        return list;
     }
 
     /**
@@ -62,9 +69,7 @@ public class NetworkDeviceService {
     private Map<String, Map<?, ?>> simplifyTopology(List<NetworkDevice> networkDevices) {
         Map<String, Map<?,?>> devices = new HashMap<>();
 
-        networkDevices.forEach((networkDevice) -> {
-            devices.put(networkDevice.getMacAddress(), simplifyTopology((List<NetworkDevice>) networkDevice.getDownlinks()));
-        });
+        networkDevices.forEach((networkDevice) -> devices.put(networkDevice.getMacAddress(), simplifyTopology((List<NetworkDevice>) networkDevice.getDownlinks())));
 
         return devices;
     }
