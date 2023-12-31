@@ -1,7 +1,6 @@
 package io.sjohnson.ubnttask.services;
 
 import io.sjohnson.ubnttask.constructs.NetworkDeviceDTO;
-import io.sjohnson.ubnttask.constructs.NetworkDeviceType;
 import io.sjohnson.ubnttask.entities.NetworkDevice;
 import io.sjohnson.ubnttask.exceptions.InvalidNetworkDeviceException;
 import io.sjohnson.ubnttask.repositories.NetworkDeviceRepository;

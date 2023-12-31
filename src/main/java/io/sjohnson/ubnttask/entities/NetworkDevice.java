@@ -13,6 +13,7 @@ import java.util.Collection;
 
 @Entity
 public class NetworkDevice implements Serializable {
+    @SuppressWarnings({"RegExpSuspiciousBackref", "RegExpUnnecessaryNonCapturingGroup", "RegExpSimplifiable"})
     public static final String MAC_ADDRESS_REGEXP = "(?:[0-9a-f]{2}(?=([:]))(?:\\1[0-9a-f]{2}){5})";
     public static final String MAC_INVALID_MESSAGE = "MAC address must be formatted as 12:34:56:78:90:ab";
     public static final String MAC_NOT_PROVIDED_MESSAGE = "MAC address must be provided and formatted as 12:34:56:78:90:ab";
