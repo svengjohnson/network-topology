@@ -2,6 +2,7 @@ package io.sjohnson.ubnttask.services;
 
 import io.sjohnson.ubnttask.constructs.NetworkDeviceDTO;
 import io.sjohnson.ubnttask.entities.NetworkDevice;
+import io.sjohnson.ubnttask.exceptions.DeviceCausesNetworkLoopException;
 import io.sjohnson.ubnttask.exceptions.InvalidNetworkDeviceException;
 import io.sjohnson.ubnttask.repositories.NetworkDeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,13 @@ public class NetworkDeviceService {
      * @param macAddress MAC address of the device
      * @return returns a flat network device
      */
-    public NetworkDeviceDTO findByMacAddress(String macAddress) {
+    public NetworkDeviceDTO findByMacAddress(String macAddress) throws InvalidNetworkDeviceException {
+        NetworkDevice networkDevice = repository.findByMacAddress(macAddress);
+
+        if (!nonNull(networkDevice)) {
+            throw new InvalidNetworkDeviceException(String.format("Device not found: %s", macAddress));
+        }
+
         return mapper.toDto(repository.findByMacAddress(macAddress));
     }
 
@@ -77,8 +84,14 @@ public class NetworkDeviceService {
      * @param macAddress MAC address of the network device
      * @return nested topology tree starting with the device with MAC address provided
      */
-    public NetworkDevice getTopologyFromDevice(String macAddress) {
-        return repository.findByMacAddress(macAddress);
+    public NetworkDevice getTopologyFromDevice(String macAddress) throws InvalidNetworkDeviceException {
+        NetworkDevice networkDevice = repository.findByMacAddress(macAddress);
+
+        if (!nonNull(networkDevice)) {
+            throw new InvalidNetworkDeviceException(String.format("Device not found: %s", macAddress));
+        }
+
+        return networkDevice;
     }
 
     /**
@@ -86,9 +99,10 @@ public class NetworkDeviceService {
      *
      * @param newDeviceDto Network Device DTO
      * @return Network Device entity proper
-     * @throws InvalidNetworkDeviceException invalid device, because either the uplink provided doesn't exist or we'd end up in a network loop
+     * @throws InvalidNetworkDeviceException uplink provided doesn't exist
+     * @throws DeviceCausesNetworkLoopException registering the device would result in a network loop
      */
-    public NetworkDevice save(NetworkDeviceDTO newDeviceDto) throws InvalidNetworkDeviceException {
+    public NetworkDevice save(NetworkDeviceDTO newDeviceDto) throws InvalidNetworkDeviceException, DeviceCausesNetworkLoopException {
         NetworkDevice networkDevice = mapper.toNetworkDevice(newDeviceDto);
 
         String uplinkMacAddress = networkDevice.getUplink();
@@ -143,15 +157,15 @@ public class NetworkDeviceService {
      *
      * @param macAddress MAC address of the device we're trying to save
      * @param uplinkMacAddress An uplink of it
-     * @throws InvalidNetworkDeviceException thrown if a network loop was detected
+     * @throws DeviceCausesNetworkLoopException thrown if a network loop was detected
      */
-    private void validateNoNetworkLoop(String macAddress, String uplinkMacAddress) throws InvalidNetworkDeviceException {
+    private void validateNoNetworkLoop(String macAddress, String uplinkMacAddress) throws DeviceCausesNetworkLoopException, InvalidNetworkDeviceException {
         if (!nonNull(uplinkMacAddress)) {
             return;
         }
 
         if (Objects.equals(macAddress, uplinkMacAddress)) {
-            throw new InvalidNetworkDeviceException(String.format("Invalid uplink device: %s - causes a network loop", uplinkMacAddress));
+            throw new DeviceCausesNetworkLoopException(String.format("Invalid uplink device: %s - causes a network loop", uplinkMacAddress));
         }
 
         // we will eventually either run out of uplink devices, or find one with a MAC address that matches the one we want to register as a downlink of it

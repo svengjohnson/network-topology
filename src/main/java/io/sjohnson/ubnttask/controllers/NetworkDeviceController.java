@@ -2,6 +2,7 @@ package io.sjohnson.ubnttask.controllers;
 
 import io.sjohnson.ubnttask.constructs.NetworkDeviceDTO;
 import io.sjohnson.ubnttask.entities.NetworkDevice;
+import io.sjohnson.ubnttask.exceptions.DeviceCausesNetworkLoopException;
 import io.sjohnson.ubnttask.exceptions.InvalidNetworkDeviceException;
 import io.sjohnson.ubnttask.services.NetworkDeviceService;
 import jakarta.validation.Valid;
@@ -37,7 +38,7 @@ public class NetworkDeviceController {
     }
 
     @PutMapping("")
-    public NetworkDevice createOrUpdateDevice(@Valid @RequestBody NetworkDeviceDTO newDeviceDto) throws InvalidNetworkDeviceException {
+    public NetworkDevice createOrUpdateDevice(@Valid @RequestBody NetworkDeviceDTO newDeviceDto) throws InvalidNetworkDeviceException, DeviceCausesNetworkLoopException {
         return service.save(newDeviceDto);
     }
 
@@ -53,12 +54,12 @@ public class NetworkDeviceController {
     }
 
     @GetMapping("/{macAddress}")
-    public NetworkDeviceDTO getDevice(@PathVariable @Pattern(regexp = MAC_ADDRESS_REGEXP, message = MAC_INVALID_MESSAGE) String macAddress) {
+    public NetworkDeviceDTO getDevice(@PathVariable @Pattern(regexp = MAC_ADDRESS_REGEXP, message = MAC_INVALID_MESSAGE) String macAddress) throws InvalidNetworkDeviceException {
         return service.findByMacAddress(macAddress);
     }
 
     @GetMapping("/{macAddress}/topology")
-    public NetworkDevice getTopologyStartingFromADevice(@PathVariable @Pattern(regexp = MAC_ADDRESS_REGEXP, message = MAC_INVALID_MESSAGE) String macAddress) {
+    public NetworkDevice getTopologyStartingFromADevice(@PathVariable @Pattern(regexp = MAC_ADDRESS_REGEXP, message = MAC_INVALID_MESSAGE) String macAddress) throws InvalidNetworkDeviceException {
         return service.getTopologyFromDevice(macAddress);
     }
 
@@ -75,9 +76,17 @@ public class NetworkDeviceController {
         return errors;
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(InvalidNetworkDeviceException.class)
     public List<String> handleDeviceNotFoundException(InvalidNetworkDeviceException ex) {
+        List<String> errors = new ArrayList<>();
+        errors.add(ex.getMessage());
+        return errors;
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(DeviceCausesNetworkLoopException.class)
+    public List<String> handleDeviceNotFoundException(DeviceCausesNetworkLoopException ex) {
         List<String> errors = new ArrayList<>();
         errors.add(ex.getMessage());
         return errors;
