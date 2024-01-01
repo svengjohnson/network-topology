@@ -8,7 +8,10 @@ import io.sjohnson.ubnttask.repositories.NetworkDeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
 
 import static io.sjohnson.ubnttask.constructs.NetworkDeviceType.*;
 import static java.util.Objects.nonNull;
@@ -22,8 +25,14 @@ public class NetworkDeviceService {
 
     private final NetworkDeviceDTOMapper mapper;
 
-    public NetworkDeviceService(NetworkDeviceDTOMapper mapper) {
+    private final Logger logger;
+
+    public NetworkDeviceService(NetworkDeviceDTOMapper mapper) throws IOException {
         this.mapper = mapper;
+
+        FileHandler handler = new FileHandler("networkDeviceService.log", true);
+        this.logger = Logger.getLogger("io.sjohnson.ubnttask.services");
+        logger.addHandler(handler);
     }
 
     /**
@@ -111,7 +120,9 @@ public class NetworkDeviceService {
             NetworkDevice uplink = repository.findByMacAddress(uplinkMacAddress);
 
             if (!nonNull(uplink)) {
-                throw new InvalidNetworkDeviceException(String.format("Invalid uplink: %s - device not found", uplinkMacAddress));
+                String errorMessage = String.format("Invalid uplink: %s - device not found", uplinkMacAddress);
+                logger.warning(errorMessage);
+                throw new InvalidNetworkDeviceException(errorMessage);
             }
 
             networkDevice.setUplink(uplink);
@@ -121,7 +132,7 @@ public class NetworkDeviceService {
         }
 
         repository.save(networkDevice);
-
+        logger.info(String.format("Saved Network Device. MAC address: %s, Uplink: %s, Type: %s, Name: %s", networkDevice.getMacAddress(), networkDevice.getUplink(), networkDevice.getType(), networkDevice.getFriendlyName()));
         return mapper.toDto(networkDevice);
     }
 
@@ -142,6 +153,7 @@ public class NetworkDeviceService {
         device.getDownlinks().forEach(this::orphanDevice);
 
         // delete the device
+        logger.info(String.format("Deleted Network Device: %s", device.getMacAddress()));
         repository.delete(device);
     }
 
@@ -152,6 +164,7 @@ public class NetworkDeviceService {
     private void orphanDevice(NetworkDevice networkDevice) {
         networkDevice.setUplink(null);
         repository.save(networkDevice);
+        logger.info(String.format("Orphaned Network Device: %s", networkDevice.getMacAddress()));
     }
 
     /**
@@ -167,7 +180,9 @@ public class NetworkDeviceService {
         }
 
         if (Objects.equals(macAddress, uplinkMacAddress)) {
-            throw new DeviceCausesNetworkLoopException(String.format("Invalid uplink device: %s - causes a network loop", uplinkMacAddress));
+            String errorMessage = String.format(String.format("Invalid uplink device: %s - causes a network loop", uplinkMacAddress));
+            logger.warning(errorMessage);
+            throw new DeviceCausesNetworkLoopException(errorMessage);
         }
 
         // we will eventually either run out of uplink devices, or find one with a MAC address that matches the one we want to register as a downlink of it

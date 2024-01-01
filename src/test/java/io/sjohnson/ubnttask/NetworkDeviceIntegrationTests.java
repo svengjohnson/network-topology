@@ -68,11 +68,27 @@ public class NetworkDeviceIntegrationTests {
     public void testDeleteNetworkDevice_ExpectSuccess() throws Exception {
         String macAddress = "ff:00:00:00:00:00";
 
-        createAndSaveNetworkDevice("ff:00:00:00:00:00", null, GATEWAY.toString(), "to be deleted");
+        createAndSaveNetworkDevice(macAddress, null, GATEWAY.toString(), "to be deleted");
 
         mvc.perform(delete("/device/"+macAddress)).andExpect(status().isOk());
 
         assertNetworkDeviceDoesntExist(macAddress);
+    }
+
+    @Test
+    public void testDeleteNetworkDevice_WithDownlinks_ExpectSuccess() throws Exception {
+        String macAddress = "ff:00:00:00:00:00";
+        String downlinkMacAddress = "ff:00:00:00:00:01";
+
+        createAndSaveNetworkDevice(macAddress, null, GATEWAY.toString(), "to be deleted");
+        createAndSaveNetworkDevice(downlinkMacAddress, macAddress, GATEWAY.toString(), "to be orphaned");
+
+        mvc.perform(delete("/device/"+macAddress)).andExpect(status().isOk());
+
+        assertNetworkDeviceDoesntExist(macAddress);
+
+        NetworkDeviceDTO orphanedDevice = service.findByMacAddress(downlinkMacAddress);
+        assertThat(orphanedDevice.getUplink()).isEqualTo(null);
     }
 
     @Test
